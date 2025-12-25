@@ -34,11 +34,14 @@ const ChatInterface: React.FC = () => {
 
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Auto-scroll to bottom
+  // Auto-scroll to bottom (scroll the container, not the window)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesContainerRef.current && messagesEndRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
   }, [messages, status]);
 
   // ============================================
@@ -370,7 +373,10 @@ Please generate an updated brand strategy JSON with new colors and logo prompts 
   return (
     <div className="flex flex-col w-full max-w-4xl mx-auto relative z-10">
       {/* Chat Messages Area */}
-      <div className="w-full overflow-y-auto px-4 py-6 mb-6 max-h-[calc(100vh-350px)] min-h-[200px] scrollbar-hide">
+      <div 
+        ref={messagesContainerRef}
+        className="w-full overflow-y-auto px-4 py-6 mb-6 max-h-[calc(100vh-350px)] min-h-[200px] scrollbar-hide"
+      >
         <div className="space-y-6">
           {messages.map((msg, idx) => (
             <MessageBubble key={idx} message={msg} />

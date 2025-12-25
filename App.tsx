@@ -13,7 +13,7 @@ function App() {
       history.scrollRestoration = 'manual';
     }
 
-    // Force instant scroll to top, overriding any CSS smooth scrolling
+    // Only scroll to top on initial mount, not on every render
     window.scrollTo({ top: 0, behavior: 'instant' });
 
     const handleScroll = () => {
@@ -21,15 +21,9 @@ function App() {
     };
 
     window.addEventListener('scroll', handleScroll);
-    
-    // Safety check to ensure we stay at top after any layout shifts
-    const rafId = requestAnimationFrame(() => {
-        window.scrollTo({ top: 0, behavior: 'instant' });
-    });
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
-      cancelAnimationFrame(rafId);
     };
   }, []);
 
