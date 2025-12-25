@@ -19,6 +19,10 @@ export async function deriveAssets(
   assets.set('logos/logo@2x.png', await resizeImage(logoBuffer, 1024, 1024));
   assets.set('logos/logo@4x.png', await resizeImage(logoBuffer, 2048, 2048));
 
+  // LOGO LOCKUPS (text rendered by code to avoid AI misspellings)
+  assets.set('logos/logo-lockup-horizontal.png', await createLogoLockup(logoBuffer, 1200, 300, 'horizontal', brandStrategy));
+  assets.set('logos/logo-lockup-stacked.png', await createLogoLockup(logoBuffer, 800, 600, 'stacked', brandStrategy));
+
   // SOCIAL
   assets.set('social/open-graph.png', await createSocialAsset(logoBuffer, 1200, 630, brandStrategy));
   assets.set('social/x-header.png', await createSocialAsset(logoBuffer, 1500, 500, brandStrategy));
@@ -176,6 +180,86 @@ function escapeXml(input: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&apos;');
+}
+
+async function createLogoLockup(
+  logoBuffer: Buffer,
+  width: number,
+  height: number,
+  layout: 'horizontal' | 'stacked',
+  brandStrategy: BrandStrategy
+): Promise<Buffer> {
+  const brandName = brandStrategy.brandName.trim();
+  const tagline = (brandStrategy.tagline || '').trim();
+  const subcopy = tagline || `${brandStrategy.industry}`.trim() || `For ${brandStrategy.audience}`.trim();
+
+  const primary = brandStrategy.colors.primary || '#0ea5e9';
+  const hex = primary.replace('#', '');
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+
+  // White background; icon + text
+  const iconSize = layout === 'horizontal'
+    ? Math.min(180, Math.round(height * 0.75))
+    : Math.min(220, Math.round(height * 0.42));
+
+  const iconLeft = layout === 'horizontal' ? 64 : Math.round((width - iconSize) / 2);
+  const iconTop = layout === 'horizontal' ? Math.round((height - iconSize) / 2) : 56;
+
+  const resizedLogo = await sharp(logoBuffer)
+    .resize(iconSize, iconSize, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
+    .toBuffer();
+
+  const titleSize = layout === 'horizontal' ? 64 : 56;
+  const subSize = layout === 'horizontal' ? 28 : 24;
+
+  const textLeft = layout === 'horizontal' ? iconLeft + iconSize + 48 : 0;
+  const titleY = layout === 'horizontal'
+    ? iconTop + Math.round(titleSize * 1.1)
+    : iconTop + iconSize + 80;
+  const subY = titleY + Math.round(subSize * 1.6);
+
+  const accentW = layout === 'horizontal' ? 220 : 180;
+  const accentX = layout === 'horizontal' ? iconLeft : Math.round((width - accentW) / 2);
+  const accentY = layout === 'horizontal' ? iconTop + iconSize + 20 : subY + 24;
+
+  const svg = layout === 'horizontal'
+    ? `
+      <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+        <style>
+          .title { font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; font-weight: 700; fill: #0B1220; }
+          .sub { font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; font-weight: 400; fill: #475569; }
+        </style>
+        <text x="${textLeft}" y="${titleY}" class="title" font-size="${titleSize}">${escapeXml(brandName)}</text>
+        <text x="${textLeft}" y="${subY}" class="sub" font-size="${subSize}">${escapeXml(subcopy).slice(0, 64)}</text>
+        <rect x="${accentX}" y="${accentY}" width="${accentW}" height="10" fill="rgb(${r},${g},${b})" />
+      </svg>`
+    : `
+      <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+        <style>
+          .title { font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; font-weight: 700; fill: #0B1220; text-anchor: middle; }
+          .sub { font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; font-weight: 400; fill: #475569; text-anchor: middle; }
+        </style>
+        <text x="${Math.round(width / 2)}" y="${titleY}" class="title" font-size="${titleSize}">${escapeXml(brandName)}</text>
+        <text x="${Math.round(width / 2)}" y="${subY}" class="sub" font-size="${subSize}">${escapeXml(subcopy).slice(0, 64)}</text>
+        <rect x="${accentX}" y="${accentY}" width="${accentW}" height="10" fill="rgb(${r},${g},${b})" />
+      </svg>`;
+
+  return sharp({
+    create: {
+      width,
+      height,
+      channels: 4,
+      background: { r: 255, g: 255, b: 255, alpha: 1 }
+    }
+  })
+    .composite([
+      { input: resizedLogo, left: iconLeft, top: iconTop },
+      { input: Buffer.from(svg), left: 0, top: 0 }
+    ])
+    .png()
+    .toBuffer();
 }
 
 // ============================================

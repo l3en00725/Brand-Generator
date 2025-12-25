@@ -32,6 +32,12 @@ These are NOT presentation mockups, NOT scenes, and NOT 3D renders.
 
 IMPORTANT: Do NOT include any external inspiration links or URLs in prompts.
 
+GPT-5.2 IMAGE PROMPTING DIRECTIVE (include this intent in every prompt):
+- Be literal and follow constraints exactly.
+- Do not add extra elements not explicitly requested.
+- Prioritize brand coherence (industry + name) over “cool” novelty.
+- If uncertain, produce a simpler mark.
+
 MANDATORY: Append this block verbatim to the END of every logo prompt:
 ${ANTI_MOCKUP_BLOCK}
 
@@ -44,12 +50,15 @@ GLOBAL PROMPT REQUIREMENTS (must appear in EACH prompt):
 - Limit palette: 2 colors max (primary + black). Background must remain white.
 - Small-size rule: must remain legible at 24px; avoid thin details; avoid micro-gaps
 - No “presentation elements”: no extra icons, no icon rows, no example lockups, no tool illustrations
+- No shading/highlights: NO bevel, NO emboss, NO inner shadow, NO glossy effects
+- Color clamp: use ONLY the primary hex + black/white. NO secondary accent colors.
 
 OPTION A — ABSTRACT ICON (no letters):
 - No letters, no initials, no text
 - Simple geometric/symbolic form built from 2–4 primitives; strong silhouette
-- Timeless, brand-agnostic, works as standalone app icon at 24px
+- Timeless and professional; subtly inspired by the industry (but not literal)
 - Avoid literal object pictograms (no tools, no pencils, no wrenches, no rakes)
+- Avoid “random tech” symbolism unless the industry is tech (no unrelated triangles, circuits, bolts)
 
 OPTION B — LETTERMARK (initials only):
 - Stylized initials only (1–3 letters max)
@@ -57,6 +66,7 @@ OPTION B — LETTERMARK (initials only):
 - NO pictorial icons or motifs (no leaves/arrows/stars). Only letter shapes.
 - No enclosing shapes unless essential to the letter construction
 - NO extra words (no industry descriptors like "PLUMBING"). Initials only.
+- NO perspective or depth on the letters (keep flat)
 
 OPTION C — WORDMARK (text rendered by code; image must be icon-only):
 - DO NOT render any text in the image (we will typeset the wordmark in code to avoid misspellings)
@@ -118,6 +128,8 @@ export const ASSET_MANIFEST = {
     { name: 'logo-light.png', description: 'For light backgrounds' },
     { name: 'logo@2x.png', description: 'High resolution (1024×1024)' },
     { name: 'logo@4x.png', description: 'Extra high resolution (2048×2048)' },
+    { name: 'logo-lockup-horizontal.png', description: 'Icon + name (horizontal)' },
+    { name: 'logo-lockup-stacked.png', description: 'Icon + name (stacked)' },
   ],
   social: [
     { name: 'open-graph.png', description: 'Website sharing (1200×630)' },
