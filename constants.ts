@@ -1,6 +1,59 @@
 export const GPT_MODEL = 'gpt-4o';
 export const DALLE_MODEL = 'dall-e-3';
 
+// =============================================================================
+// LOGO PROMPTING (V1) - Flat, SVG-ready, anti-mockup constraints
+// =============================================================================
+export const ANTI_MOCKUP_BLOCK = `Flat logo mark only.
+NO mockups.
+NO paper, pens, desks, lighting, shadows, depth, or 3D effects.
+NO gradients or textures.
+NO background scenes.
+Solid shapes only.
+Vector-style appearance.
+Designed to work at 24px.
+Must look like a real SVG logo, not a rendered image.
+Centered on a plain white background.`;
+
+export const LOGO_PROMPT_RULES = `LOGO PROMPT GENERATION RULES (CRITICAL - FOLLOW EXACTLY):
+
+You must generate 3 DISTINCT logo prompts (A/B/C). Each must produce a flat, timeless, brand-ready logo mark.
+These are NOT presentation mockups, NOT scenes, and NOT 3D renders.
+
+IMPORTANT: Do NOT include any external inspiration links or URLs in prompts.
+
+MANDATORY: Append this block verbatim to the END of every logo prompt:
+${ANTI_MOCKUP_BLOCK}
+
+GLOBAL PROMPT REQUIREMENTS (must appear in EACH prompt):
+- Explicitly say: "Logo mark, not illustration"
+- Explicitly describe shape logic with concrete primitives + alignment (e.g., "two circles overlapped 30%, cut by a 45° diagonal")
+- Use SOLID FILLS ONLY (no strokes); crisp edges; consistent visual weight
+- Explicitly include the brand primary color hex (e.g., "Using #1e3a5f as the primary color")
+- Explicitly ban gradients, realism, textures, shadows, and 3D
+- Limit palette: 2 colors max (primary + black). Background must remain white.
+- Small-size rule: must remain legible at 24px; avoid thin details; avoid micro-gaps
+
+OPTION A — ABSTRACT ICON (no letters):
+- No letters, no initials, no text
+- Simple geometric/symbolic form built from 2–4 primitives; strong silhouette
+- Timeless, brand-agnostic, works as standalone app icon at 24px
+
+OPTION B — LETTERMARK (initials only):
+- Stylized initials only (1–3 letters max)
+- Typography-driven with custom letterform modifications (cuts, joins, terminals, negative space)
+- NO pictorial icons or motifs (no leaves/arrows/stars). Only letter shapes.
+- No enclosing shapes unless essential to the letter construction
+
+OPTION C — WORDMARK (full brand name):
+- Full brand name only
+- Clean modern typography with custom kerning and 1 subtle modification (optional)
+- No tagline. No extra text. No separate icon.
+- Optional: integrate a subtle symbol INTO a letter (no separate decorative icon)
+
+OUTPUT FORMAT:
+- Each prompt must be a single paragraph followed by the mandatory block.`;
+
 export const GPT_SYSTEM_PROMPT = `You are BrandForge, a brand strategist AI. Your role is to gather requirements and produce a structured brand strategy with logo generation prompts.
 
 CONVERSATION FLOW (STRICT - ONE QUESTION PER TURN):
@@ -31,15 +84,7 @@ After Step 3, output ONLY a JSON block with this exact structure:
 }
 \`\`\`
 
-LOGO PROMPT RULES (CRITICAL FOR DALL-E 3):
-- Each prompt MUST include: "minimalist logo design, solid white background, centered composition, high contrast, vector-style, professional branding"
-- Option A: Icon-based (abstract geometric symbol representing the industry)
-- Option B: Lettermark (stylized initials or monogram of the brand name)
-- Option C: Wordmark (the brand name with a subtle integrated icon element)
-- Include the brand's primary color explicitly in each prompt (e.g., "using navy blue #1e3a5f")
-- Include the brand name in prompts B and C
-- NO human faces, NO photorealistic elements, NO complex illustrations, NO gradients
-- NO text that says "logo" or "brand" - just the actual brand name/initials
+${LOGO_PROMPT_RULES}
 
 CONSTRAINTS:
 - Ask ONE question at a time

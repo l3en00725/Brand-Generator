@@ -1,6 +1,13 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { generateAllLogos } from '../services/openaiService';
 import type { GenerateLogosRequest, GenerateLogosResponse, LogoOption } from '../types';
+import { ANTI_MOCKUP_BLOCK } from '../constants';
+
+function enforceLogoConstraints(prompt: string): string {
+  return prompt.includes('Flat logo mark only.')
+    ? prompt
+    : `${prompt}\n\n${ANTI_MOCKUP_BLOCK}`;
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Only allow POST
@@ -15,25 +22,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'logoPrompts with A, B, C are required' });
     }
 
+    const enforcedPrompts = {
+      A: enforceLogoConstraints(logoPrompts.A),
+      B: enforceLogoConstraints(logoPrompts.B),
+      C: enforceLogoConstraints(logoPrompts.C),
+    };
+
     // Generate all 3 logos in parallel
-    const logos = await generateAllLogos(logoPrompts);
+    const logos = await generateAllLogos(enforcedPrompts);
 
     // Format response with data URLs
     const options: LogoOption[] = [
       {
         id: 'A',
         imageUrl: `data:image/png;base64,${logos.A}`,
-        prompt: logoPrompts.A
+        prompt: enforcedPrompts.A
       },
       {
         id: 'B',
         imageUrl: `data:image/png;base64,${logos.B}`,
-        prompt: logoPrompts.B
+        prompt: enforcedPrompts.B
       },
       {
         id: 'C',
         imageUrl: `data:image/png;base64,${logos.C}`,
-        prompt: logoPrompts.C
+        prompt: enforcedPrompts.C
       }
     ];
 

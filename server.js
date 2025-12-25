@@ -37,59 +37,42 @@ Centered on a plain white background.`;
 const LOGO_PROMPT_RULES = `
 LOGO PROMPT GENERATION RULES (CRITICAL - FOLLOW EXACTLY):
 
-You must generate 3 DISTINCT logo prompts. Each must be a flat, timeless, SVG-ready logo mark.
-NOT a presentation mockup. NOT a scene. NOT a 3D render.
+You must generate 3 DISTINCT logo prompts (A/B/C). Each must produce a flat, timeless, brand-ready logo mark.
+These are NOT presentation mockups, NOT scenes, and NOT 3D renders.
 
-=== MANDATORY CONSTRAINT BLOCK (APPEND TO EVERY PROMPT) ===
+IMPORTANT: Do NOT include any external inspiration links or URLs in prompts.
+
+MANDATORY: Append this block verbatim to the END of every logo prompt:
 ${ANTI_MOCKUP_BLOCK}
 
-=== OPTION A: ABSTRACT ICON ===
-Purpose: A standalone geometric symbol with no letters.
-Requirements:
-- Simple geometric or symbolic form (circles, squares, abstract shapes)
-- Timeless and brand-agnostic (could represent many industries)
-- Works as an app icon at small sizes
-- NO letters, NO text, NO initials
-- Describe specific shape logic (e.g., "two overlapping circles forming a lens shape")
-- Consistent line weight throughout
-- Use the brand's primary color as the main fill color
+GLOBAL PROMPT REQUIREMENTS (must appear in EACH prompt):
+- Explicitly say: "Logo mark, not illustration"
+- Explicitly describe shape logic with concrete primitives + alignment (e.g., "two circles overlapped 30%, cut by a 45° diagonal")
+- Use SOLID FILLS ONLY (no strokes); crisp edges; consistent visual weight
+- Explicitly include the brand primary color hex (e.g., "Using #1e3a5f as the primary color")
+- Explicitly ban gradients, realism, textures, shadows, and 3D
+- Limit palette: 2 colors max (primary + black). Background must remain white.
+- Small-size rule: must remain legible at 24px; avoid thin details; avoid micro-gaps
 
-=== OPTION B: LETTERMARK ===
-Purpose: Stylized initials that feel custom-designed.
-Requirements:
-- Use ONLY the brand's initials (1-3 letters max)
-- Typography-driven design
-- NO enclosing shapes unless essential to the letter design
-- Must feel custom, NOT like a generic font
-- Describe the typographic treatment (e.g., "bold sans-serif B with a cut corner")
-- Consistent line weight
-- Use the brand's primary color
+OPTION A — ABSTRACT ICON (no letters):
+- No letters, no initials, no text
+- Simple geometric/symbolic form built from 2–4 primitives; strong silhouette
+- Timeless, brand-agnostic, works as standalone app icon at 24px
 
-=== OPTION C: WORDMARK ===
-Purpose: The full brand name as a typographic logo.
-Requirements:
-- Spell out the FULL brand name
-- Clean, modern typography
-- Optional: ONE subtle symbol integrated into a letter (e.g., dot of 'i' replaced)
-- NO separate decorative icons floating nearby
-- Describe the type style (e.g., "geometric sans-serif, medium weight")
-- Use the brand's primary color
+OPTION B — LETTERMARK (initials only):
+- Stylized initials only (1–3 letters max)
+- Typography-driven with custom letterform modifications (cuts, joins, terminals, negative space)
+- NO pictorial icons or motifs (no leaves/arrows/stars). Only letter shapes.
+- No enclosing shapes unless essential to the letter construction
 
-=== PROMPT STRUCTURE (FOR EACH OPTION) ===
-Each prompt must include:
-1. "Logo mark for [brand name]" - state it's a logo mark, not an illustration
-2. Explicit shape/letter description with specific geometry
-3. "Using [primary color hex] as the primary color"
-4. "Consistent line weight, solid fills, no gradients"
-5. The full anti-mockup constraint block above
+OPTION C — WORDMARK (full brand name):
+- Full brand name only
+- Clean modern typography with custom kerning and 1 subtle modification (optional)
+- No tagline. No extra text. No separate icon.
+- Optional: integrate a subtle symbol INTO a letter (no separate decorative icon)
 
-=== WHAT TO AVOID ===
-- NO external URLs or references
-- NO "inspired by Dribbble" or similar
-- NO gradients, shadows, or 3D effects
-- NO realistic textures or photography
-- NO mockup scenes (desks, paper, screens)
-- NO decorative elements unrelated to the core mark
+OUTPUT FORMAT:
+- Each prompt must be a single paragraph followed by the mandatory block.
 `;
 
 const GPT_SYSTEM_PROMPT = `You are BrandForge, a brand strategist AI. Your role is to gather requirements and produce a structured brand strategy with logo generation prompts.

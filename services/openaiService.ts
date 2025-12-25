@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { GPT_MODEL, DALLE_MODEL, GPT_SYSTEM_PROMPT } from '../constants';
+import { GPT_MODEL, DALLE_MODEL, GPT_SYSTEM_PROMPT, ANTI_MOCKUP_BLOCK } from '../constants';
 import type { Message, BrandStrategy } from '../types';
 
 // Initialize OpenAI client
@@ -39,9 +39,15 @@ export async function chat(messages: Message[]): Promise<string> {
 export async function generateLogo(prompt: string): Promise<string> {
   const openai = getOpenAIClient();
   
+  // Safety net: ensure the hard anti-mockup constraints are always present.
+  // (We still ask GPT-4o to include them, but never trust it 100%.)
+  const finalPrompt = prompt.includes('Flat logo mark only.')
+    ? prompt
+    : `${prompt}\n\n${ANTI_MOCKUP_BLOCK}`;
+
   const response = await openai.images.generate({
     model: DALLE_MODEL,
-    prompt: prompt,
+    prompt: finalPrompt,
     n: 1,
     size: '1024x1024',
     quality: 'hd',
