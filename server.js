@@ -47,13 +47,22 @@ After Step 3, output ONLY a JSON block with this exact structure:
 \`\`\`
 
 LOGO PROMPT RULES (CRITICAL FOR DALL-E 3):
-- Each prompt MUST include: "minimalist logo design, solid white background, centered composition, high contrast, vector-style, professional branding"
-- Option A: Icon-based (abstract geometric symbol representing the industry)
-- Option B: Lettermark (stylized initials or monogram of the brand name)
-- Option C: Wordmark (the brand name with a subtle integrated icon element)
-- Include the brand's primary color explicitly in each prompt (e.g., "using navy blue #1e3a5f")
-- Include the brand name in prompts B and C
-- NO human faces, NO photorealistic elements, NO complex illustrations, NO gradients
+Each prompt should follow this structure for professional Dribbble-quality logos:
+
+BASE PROMPT (include in ALL options):
+"Minimalist professional logo design for a modern brand, inspired by high-quality branding examples. Clean, modern, and cohesive aesthetic. Distinct from simple monograms or basic geometric mashups. Professional style similar to modern branding concepts trending on Dribbble. Strong use of the brand's primary color {primary_color}. Centered composition, crisp edges, and balanced negative space. No complex photo elements, gradients, or illustrations. High contrast and scalable for multiple formats. PNG output, 1024×1024, transparent background."
+
+OPTION-SPECIFIC ADDITIONS:
+- Option A (Icon-First): "A geometric abstract symbol that conveys structure and balance, suitable as an app icon and visual mark. Modern and memorable."
+- Option B (Lettermark): "A stylized lettermark using the initials '{initials}', building rhythm and modern typographic balance. Creative and distinctive."
+- Option C (Wordmark + Symbol): "The full brand name '{brand_name}' rendered with minimalist type style, paired with a subtle icon integrated into the layout."
+
+CRITICAL RULES:
+- Replace {primary_color} with the actual hex code (e.g., #1e3a5f navy blue)
+- Replace {initials} with brand initials
+- Replace {brand_name} with full brand name
+- NO human faces, NO photorealistic elements, NO complex illustrations
+- NO gradients, NO 3D effects
 - NO text that says "logo" or "brand" - just the actual brand name/initials
 
 CONSTRAINTS:
@@ -122,8 +131,16 @@ RULES:
 - Keep the brand name the same
 - Update colors/tone/style based on the revision request
 - Generate NEW logo prompts that reflect the requested changes
-- Each logo prompt MUST include: "minimalist logo design, solid white background, centered composition, high contrast, vector-style, professional branding"
-- Include a brief acknowledgment of the changes before the JSON block
+
+LOGO PROMPT FORMAT (use for all 3 options):
+Each prompt should include: "Minimalist professional logo design for a modern brand, inspired by high-quality branding examples. Clean, modern, and cohesive aesthetic. Professional style similar to modern branding concepts trending on Dribbble. Strong use of the brand's primary color {hex}. Centered composition, crisp edges, and balanced negative space. No complex photo elements, gradients, or illustrations. High contrast and scalable. PNG, 1024×1024, transparent background."
+
+Then add option-specific details:
+- Option A: geometric abstract symbol, app icon suitable
+- Option B: stylized lettermark with brand initials
+- Option C: full brand name with subtle integrated icon
+
+Include a brief acknowledgment of the changes before the JSON block.
 
 Be creative with the revision - interpret the user's request and make meaningful changes to the brand aesthetic.`;
 
