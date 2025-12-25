@@ -316,6 +316,9 @@ Please generate an updated brand strategy JSON with new colors and logo prompts 
           onSelect={handleSelectOption}
           onConfirm={handleConfirmSelection}
           brandStrategy={brandStrategy}
+          revisionsUsed={revisionsUsed}
+          isRevising={isRevising}
+          onRequestRevision={handleRequestRevision}
         />
       </div>
     );
@@ -335,8 +338,6 @@ Please generate an updated brand strategy JSON with new colors and logo prompts 
           onSwitchOption={handleSwitchOption}
           onDownload={handleDownload}
           isDownloading={phase === AppPhase.DOWNLOADING}
-          onRequestRevision={handleRequestRevision}
-          isRevising={isRevising}
         />
       </div>
     );

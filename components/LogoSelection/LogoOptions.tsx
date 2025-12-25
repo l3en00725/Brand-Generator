@@ -3,6 +3,7 @@ import { Sparkles } from 'lucide-react';
 import type { BrandStrategy, LogoOption, LogoOptionId } from '../../types';
 import AssetPreviewList from './AssetPreviewList';
 import OptionPreviews from './OptionPreviews';
+import RefineOptionsPanel from './RefineOptionsPanel';
 
 interface LogoOptionsProps {
   options: LogoOption[];
@@ -11,6 +12,9 @@ interface LogoOptionsProps {
   onConfirm: () => void;
   isLoading?: boolean;
   brandStrategy: BrandStrategy;
+  revisionsUsed: number;
+  isRevising: boolean;
+  onRequestRevision: (request: string) => Promise<void>;
 }
 
 const LogoOptions: React.FC<LogoOptionsProps> = ({
@@ -19,7 +23,10 @@ const LogoOptions: React.FC<LogoOptionsProps> = ({
   onSelect,
   onConfirm,
   isLoading = false,
-  brandStrategy
+  brandStrategy,
+  revisionsUsed,
+  isRevising,
+  onRequestRevision
 }) => {
   const optionLabels: Record<LogoOptionId, { title: string; description: string }> = {
     A: { title: 'Abstract Icon', description: 'Geometric symbol, no letters' },
@@ -40,6 +47,13 @@ const LogoOptions: React.FC<LogoOptionsProps> = ({
         <h2 className="text-2xl font-serif text-white mb-2">Choose your logo</h2>
         <p className="text-gray-400 text-sm">Select one option to receive your complete brand asset package</p>
       </div>
+
+      <RefineOptionsPanel
+        brandStrategy={brandStrategy}
+        revisionsUsed={revisionsUsed}
+        onRequestRevision={onRequestRevision}
+        isRevising={isRevising}
+      />
 
       {/* Options Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">

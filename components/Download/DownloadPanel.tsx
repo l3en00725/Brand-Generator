@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Download, RefreshCw, Palette, ArrowLeftRight, Check, Package, MessageSquare, Send, Sparkles } from 'lucide-react';
+import { Download, RefreshCw, Palette, ArrowLeftRight, Check, Package } from 'lucide-react';
 import type { LogoOption, LogoOptionId, BrandStrategy } from '../../types';
 import { MAX_FREE_REVISIONS } from '../../types';
 import { ASSET_MANIFEST } from '../../constants';
@@ -14,8 +14,6 @@ interface DownloadPanelProps {
   onSwitchOption: (newOption: LogoOptionId) => void;
   onDownload: () => void;
   isDownloading: boolean;
-  onRequestRevision?: (request: string) => Promise<void>;
-  isRevising?: boolean;
 }
 
 const DownloadPanel: React.FC<DownloadPanelProps> = ({
@@ -26,20 +24,10 @@ const DownloadPanel: React.FC<DownloadPanelProps> = ({
   onColorRevision,
   onSwitchOption,
   onDownload,
-  isDownloading,
-  onRequestRevision,
-  isRevising = false
+  isDownloading
 }) => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [showRevisionChat, setShowRevisionChat] = useState(false);
-  const [revisionInput, setRevisionInput] = useState('');
   const canRevise = revisionsUsed < MAX_FREE_REVISIONS;
-
-  const handleRevisionSubmit = async () => {
-    if (!revisionInput.trim() || !onRequestRevision) return;
-    await onRequestRevision(revisionInput.trim());
-    setRevisionInput('');
-  };
 
   const handleRevision = (action: () => void) => {
     if (canRevise) {
@@ -200,7 +188,7 @@ const DownloadPanel: React.FC<DownloadPanelProps> = ({
             </button>
 
             {/* Revision Section */}
-            <div className="mt-6 pt-6 border-t border-white/10 flex-1">
+            <div className="mt-6 pt-6 border-t border-white/10">
               <div className="flex items-center justify-between mb-4">
                 <span className="text-xs font-mono text-gray-500 uppercase tracking-wider">
                   Revisions
@@ -236,7 +224,7 @@ const DownloadPanel: React.FC<DownloadPanelProps> = ({
               </div>
 
               {/* Switch Option */}
-              <div>
+              <div className="mb-4">
                 <span className="text-xs text-gray-500 mb-2 block">Switch to another option</span>
                 <div className="flex gap-2">
                   {allOptions
@@ -255,76 +243,15 @@ const DownloadPanel: React.FC<DownloadPanelProps> = ({
               </div>
 
               {!canRevise && (
-                <p className="text-[10px] text-gray-600 mt-4 text-center">
+                <p className="text-[10px] text-gray-600 mb-4 text-center">
                   Additional revisions cost $2 each
                 </p>
               )}
-
-              {/* Chat Revision Button */}
-              {onRequestRevision && (
-                <div className="mt-4 pt-4 border-t border-white/10">
-                  <button
-                    onClick={() => setShowRevisionChat(!showRevisionChat)}
-                    className="w-full py-3 px-4 bg-purple-500/10 border border-purple-500/30 rounded-xl text-sm text-purple-300 hover:bg-purple-500/20 transition-colors flex items-center justify-center gap-2"
-                  >
-                    <MessageSquare size={16} />
-                    {showRevisionChat ? 'Hide Revision Chat' : 'Request Revision via Chat'}
-                  </button>
-                </div>
-              )}
             </div>
+
           </div>
         </div>
       </div>
-
-      {/* Revision Chat Panel */}
-      {showRevisionChat && onRequestRevision && (
-        <div className="mt-6 bg-dark-800 border border-purple-500/30 rounded-2xl p-6 animate-fade-in">
-          <div className="flex items-center gap-2 mb-4">
-            <Sparkles size={16} className="text-purple-400" />
-            <span className="text-sm font-mono text-purple-300 uppercase tracking-wider">
-              Test Mode: Revision Chat
-            </span>
-          </div>
-          
-          <p className="text-gray-400 text-sm mb-4">
-            Tell the AI what you'd like to change. For example:
-            <span className="block mt-2 text-gray-500 italic">
-              "Make the colors more earthy and natural" or "I want a bolder, more modern look"
-            </span>
-          </p>
-
-          <div className="relative">
-            <input
-              type="text"
-              value={revisionInput}
-              onChange={(e) => setRevisionInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleRevisionSubmit()}
-              placeholder="Describe what you'd like to change..."
-              className="w-full bg-dark-900 text-white placeholder-gray-500 border border-white/10 rounded-xl py-3 pl-4 pr-12 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all"
-              disabled={isRevising}
-            />
-            <button
-              onClick={handleRevisionSubmit}
-              disabled={!revisionInput.trim() || isRevising}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-purple-500 text-white rounded-lg hover:bg-purple-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-            >
-              {isRevising ? (
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
-                <Send size={16} />
-              )}
-            </button>
-          </div>
-
-          {isRevising && (
-            <div className="mt-4 flex items-center gap-2 text-purple-300 text-sm">
-              <Sparkles size={14} className="animate-pulse" />
-              <span>Regenerating your brand with changes...</span>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Payment Modal */}
       <RevisionModal 
