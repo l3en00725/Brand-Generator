@@ -307,7 +307,7 @@ Please generate an updated brand strategy JSON with new colors and logo prompts 
   // ============================================
   
   // Logo Selection Phase
-  if (phase === AppPhase.SELECTION && logoOptions) {
+  if (phase === AppPhase.SELECTION && logoOptions && brandStrategy) {
     return (
       <div className="w-full max-w-5xl mx-auto px-4 py-8">
         <LogoOptions
@@ -315,6 +315,7 @@ Please generate an updated brand strategy JSON with new colors and logo prompts 
           selectedOption={selectedOption}
           onSelect={handleSelectOption}
           onConfirm={handleConfirmSelection}
+          brandStrategy={brandStrategy}
         />
       </div>
     );

@@ -1,7 +1,8 @@
 import React from 'react';
 import { Sparkles } from 'lucide-react';
-import type { LogoOption, LogoOptionId } from '../../types';
+import type { BrandStrategy, LogoOption, LogoOptionId } from '../../types';
 import AssetPreviewList from './AssetPreviewList';
+import OptionPreviews from './OptionPreviews';
 
 interface LogoOptionsProps {
   options: LogoOption[];
@@ -9,6 +10,7 @@ interface LogoOptionsProps {
   onSelect: (id: LogoOptionId) => void;
   onConfirm: () => void;
   isLoading?: boolean;
+  brandStrategy: BrandStrategy;
 }
 
 const LogoOptions: React.FC<LogoOptionsProps> = ({
@@ -16,7 +18,8 @@ const LogoOptions: React.FC<LogoOptionsProps> = ({
   selectedOption,
   onSelect,
   onConfirm,
-  isLoading = false
+  isLoading = false,
+  brandStrategy
 }) => {
   const optionLabels: Record<LogoOptionId, { title: string; description: string }> = {
     A: { title: 'Abstract Icon', description: 'Geometric symbol, no letters' },
@@ -89,6 +92,9 @@ const LogoOptions: React.FC<LogoOptionsProps> = ({
 
               {/* Asset Preview */}
               <AssetPreviewList />
+
+              {/* Concrete deliverables preview */}
+              <OptionPreviews logoDataUrl={option.imageUrl} brandStrategy={brandStrategy} />
             </div>
           );
         })}
