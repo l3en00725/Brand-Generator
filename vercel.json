@@ -1,0 +1,14 @@
+{
+  "functions": {
+    "api/chat.ts": {
+      "maxDuration": 30
+    },
+    "api/generate-logos.ts": {
+      "maxDuration": 60
+    },
+    "api/generate-assets.ts": {
+      "maxDuration": 60
+    }
+  }
+}
+

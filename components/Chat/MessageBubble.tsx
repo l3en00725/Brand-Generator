@@ -1,5 +1,5 @@
 import React from 'react';
-import { Message } from '../../types';
+import type { Message } from '../../types';
 import ReactMarkdown from 'react-markdown';
 import { Bot, User } from 'lucide-react';
 
@@ -10,11 +10,10 @@ interface MessageBubbleProps {
 const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   const isUser = message.role === 'user';
 
-  // Clean raw JSON out of the message for display if it exists in a block, 
-  // keeping only the intro/outro text, or just hiding the raw JSON block
-  const displayContent = message.text.replace(/```json[\s\S]*?```/g, '');
+  // Clean raw JSON out of the message for display if it exists in a block
+  const displayContent = message.content.replace(/```json[\s\S]*?```/g, '');
 
-  if (!displayContent.trim()) return null; // Don't show empty messages (e.g. only JSON)
+  if (!displayContent.trim()) return null;
 
   return (
     <div className={`flex w-full mb-6 ${isUser ? 'justify-end' : 'justify-start'}`}>
@@ -26,7 +25,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
         </div>
 
         {/* Bubble */}
-        <div className={`flex flex-col`}>
+        <div className="flex flex-col">
           <div 
             className={`px-5 py-3.5 rounded-2xl text-sm leading-relaxed shadow-sm ${
               isUser 
@@ -35,7 +34,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
             }`}
           >
             {isUser ? (
-              <p>{message.text}</p>
+              <p>{message.content}</p>
             ) : (
               <div className="prose prose-invert prose-sm max-w-none">
                 <ReactMarkdown>{displayContent}</ReactMarkdown>
@@ -43,7 +42,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
             )}
           </div>
           <span className={`text-[10px] text-gray-500 mt-1 ${isUser ? 'text-right' : 'text-left'}`}>
-            {isUser ? 'You' : 'Brand Architect'}
+            {isUser ? 'You' : 'BrandForge'}
           </span>
         </div>
       </div>
