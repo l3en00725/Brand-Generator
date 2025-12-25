@@ -59,6 +59,7 @@ export interface LogoOption {
   id: LogoOptionId;
   imageUrl: string;  // data:image/png;base64,...
   prompt: string;
+  label?: string;    // e.g., "Abstract Icon", "Lettermark", "Wordmark"
 }
 
 // ============================================

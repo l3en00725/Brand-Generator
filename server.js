@@ -16,6 +16,82 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
+// =============================================================================
+// ANTI-MOCKUP CONSTRAINT BLOCK (MANDATORY FOR ALL LOGO PROMPTS)
+// =============================================================================
+const ANTI_MOCKUP_BLOCK = `
+Flat logo mark only.
+NO mockups.
+NO paper, pens, desks, lighting, shadows, depth, or 3D effects.
+NO gradients or textures.
+NO background scenes.
+Solid shapes only.
+Vector-style appearance.
+Designed to work at 24px.
+Must look like a real SVG logo, not a rendered image.
+Centered on a plain white background.`;
+
+// =============================================================================
+// LOGO PROMPT TEMPLATES (STRATEGIC DIFFERENTIATION)
+// =============================================================================
+const LOGO_PROMPT_RULES = `
+LOGO PROMPT GENERATION RULES (CRITICAL - FOLLOW EXACTLY):
+
+You must generate 3 DISTINCT logo prompts. Each must be a flat, timeless, SVG-ready logo mark.
+NOT a presentation mockup. NOT a scene. NOT a 3D render.
+
+=== MANDATORY CONSTRAINT BLOCK (APPEND TO EVERY PROMPT) ===
+${ANTI_MOCKUP_BLOCK}
+
+=== OPTION A: ABSTRACT ICON ===
+Purpose: A standalone geometric symbol with no letters.
+Requirements:
+- Simple geometric or symbolic form (circles, squares, abstract shapes)
+- Timeless and brand-agnostic (could represent many industries)
+- Works as an app icon at small sizes
+- NO letters, NO text, NO initials
+- Describe specific shape logic (e.g., "two overlapping circles forming a lens shape")
+- Consistent line weight throughout
+- Use the brand's primary color as the main fill color
+
+=== OPTION B: LETTERMARK ===
+Purpose: Stylized initials that feel custom-designed.
+Requirements:
+- Use ONLY the brand's initials (1-3 letters max)
+- Typography-driven design
+- NO enclosing shapes unless essential to the letter design
+- Must feel custom, NOT like a generic font
+- Describe the typographic treatment (e.g., "bold sans-serif B with a cut corner")
+- Consistent line weight
+- Use the brand's primary color
+
+=== OPTION C: WORDMARK ===
+Purpose: The full brand name as a typographic logo.
+Requirements:
+- Spell out the FULL brand name
+- Clean, modern typography
+- Optional: ONE subtle symbol integrated into a letter (e.g., dot of 'i' replaced)
+- NO separate decorative icons floating nearby
+- Describe the type style (e.g., "geometric sans-serif, medium weight")
+- Use the brand's primary color
+
+=== PROMPT STRUCTURE (FOR EACH OPTION) ===
+Each prompt must include:
+1. "Logo mark for [brand name]" - state it's a logo mark, not an illustration
+2. Explicit shape/letter description with specific geometry
+3. "Using [primary color hex] as the primary color"
+4. "Consistent line weight, solid fills, no gradients"
+5. The full anti-mockup constraint block above
+
+=== WHAT TO AVOID ===
+- NO external URLs or references
+- NO "inspired by Dribbble" or similar
+- NO gradients, shadows, or 3D effects
+- NO realistic textures or photography
+- NO mockup scenes (desks, paper, screens)
+- NO decorative elements unrelated to the core mark
+`;
+
 const GPT_SYSTEM_PROMPT = `You are BrandForge, a brand strategist AI. Your role is to gather requirements and produce a structured brand strategy with logo generation prompts.
 
 CONVERSATION FLOW (STRICT - ONE QUESTION PER TURN):
@@ -39,31 +115,14 @@ After Step 3, output ONLY a JSON block with this exact structure:
     "text": "#hex"
   },
   "logoPrompts": {
-    "A": "Detailed DALL-E prompt for option A...",
-    "B": "Detailed DALL-E prompt for option B...",
-    "C": "Detailed DALL-E prompt for option C..."
+    "A": "Full DALL-E prompt for Abstract Icon option...",
+    "B": "Full DALL-E prompt for Lettermark option...",
+    "C": "Full DALL-E prompt for Wordmark option..."
   }
 }
 \`\`\`
 
-LOGO PROMPT RULES (CRITICAL FOR DALL-E 3):
-Each prompt should follow this structure for professional Dribbble-quality logos:
-
-BASE PROMPT (include in ALL options):
-"Minimalist professional logo design for a modern brand, inspired by high-quality branding examples. Clean, modern, and cohesive aesthetic. Distinct from simple monograms or basic geometric mashups. Professional style similar to modern branding concepts trending on Dribbble. Strong use of the brand's primary color {primary_color}. Centered composition, crisp edges, and balanced negative space. No complex photo elements, gradients, or illustrations. High contrast and scalable for multiple formats. PNG output, 1024×1024, transparent background."
-
-OPTION-SPECIFIC ADDITIONS:
-- Option A (Icon-First): "A geometric abstract symbol that conveys structure and balance, suitable as an app icon and visual mark. Modern and memorable."
-- Option B (Lettermark): "A stylized lettermark using the initials '{initials}', building rhythm and modern typographic balance. Creative and distinctive."
-- Option C (Wordmark + Symbol): "The full brand name '{brand_name}' rendered with minimalist type style, paired with a subtle icon integrated into the layout."
-
-CRITICAL RULES:
-- Replace {primary_color} with the actual hex code (e.g., #1e3a5f navy blue)
-- Replace {initials} with brand initials
-- Replace {brand_name} with full brand name
-- NO human faces, NO photorealistic elements, NO complex illustrations
-- NO gradients, NO 3D effects
-- NO text that says "logo" or "brand" - just the actual brand name/initials
+${LOGO_PROMPT_RULES}
 
 CONSTRAINTS:
 - Ask ONE question at a time
@@ -72,6 +131,44 @@ CONSTRAINTS:
 - Do NOT suggest alternatives
 - Do NOT output JSON until after Step 3 is answered
 - Stay focused on brand requirements only`;
+
+// Revision-specific system prompt
+const REVISION_SYSTEM_PROMPT = `You are BrandForge, a brand strategist AI. The user has already created a brand and wants to revise it.
+
+Given their revision request, generate an UPDATED brand strategy with the requested changes.
+
+You MUST output a JSON block with this exact structure:
+\`\`\`json
+{
+  "brandName": "string (keep the same name)",
+  "industry": "string", 
+  "audience": "string",
+  "tone": "professional" | "modern",
+  "tagline": "short tagline (can update)",
+  "colors": {
+    "primary": "#hex (update based on request)",
+    "secondary": "#hex",
+    "accent": "#hex",
+    "background": "#hex",
+    "text": "#hex"
+  },
+  "logoPrompts": {
+    "A": "Full DALL-E prompt for Abstract Icon option...",
+    "B": "Full DALL-E prompt for Lettermark option...",
+    "C": "Full DALL-E prompt for Wordmark option..."
+  }
+}
+\`\`\`
+
+${LOGO_PROMPT_RULES}
+
+REVISION RULES:
+- Keep the brand name the same
+- Update colors/tone/style based on the revision request
+- Generate NEW logo prompts that reflect the requested changes
+- Include a brief acknowledgment of the changes before the JSON block
+
+Be creative with the revision - interpret the user's request and make meaningful changes to the brand aesthetic.`;
 
 // Helper to extract JSON from response
 function extractJsonFromResponse(text) {
@@ -99,50 +196,16 @@ function detectStep(messages) {
   return 4;
 }
 
-// Revision-specific system prompt
-const REVISION_SYSTEM_PROMPT = `You are BrandForge, a brand strategist AI. The user has already created a brand and wants to revise it.
-
-Given their revision request, generate an UPDATED brand strategy with the requested changes.
-
-You MUST output a JSON block with this exact structure:
-\`\`\`json
-{
-  "brandName": "string (keep the same name)",
-  "industry": "string", 
-  "audience": "string",
-  "tone": "professional" | "modern",
-  "tagline": "short tagline (can update)",
-  "colors": {
-    "primary": "#hex (update based on request)",
-    "secondary": "#hex",
-    "accent": "#hex",
-    "background": "#hex",
-    "text": "#hex"
-  },
-  "logoPrompts": {
-    "A": "Detailed DALL-E prompt for option A...",
-    "B": "Detailed DALL-E prompt for option B...",
-    "C": "Detailed DALL-E prompt for option C..."
+// =============================================================================
+// Enforce anti-mockup constraints on prompts before sending to DALL-E
+// =============================================================================
+function enforceLogoConstraints(prompt) {
+  // Always append the anti-mockup block if not already present
+  if (!prompt.includes('Flat logo mark only')) {
+    prompt = prompt + '\n\n' + ANTI_MOCKUP_BLOCK;
   }
+  return prompt;
 }
-\`\`\`
-
-RULES:
-- Keep the brand name the same
-- Update colors/tone/style based on the revision request
-- Generate NEW logo prompts that reflect the requested changes
-
-LOGO PROMPT FORMAT (use for all 3 options):
-Each prompt should include: "Minimalist professional logo design for a modern brand, inspired by high-quality branding examples. Clean, modern, and cohesive aesthetic. Professional style similar to modern branding concepts trending on Dribbble. Strong use of the brand's primary color {hex}. Centered composition, crisp edges, and balanced negative space. No complex photo elements, gradients, or illustrations. High contrast and scalable. PNG, 1024×1024, transparent background."
-
-Then add option-specific details:
-- Option A: geometric abstract symbol, app icon suitable
-- Option B: stylized lettermark with brand initials
-- Option C: full brand name with subtle integrated icon
-
-Include a brief acknowledgment of the changes before the JSON block.
-
-Be creative with the revision - interpret the user's request and make meaningful changes to the brand aesthetic.`;
 
 // POST /api/chat
 app.post('/api/chat', async (req, res) => {
@@ -166,7 +229,7 @@ app.post('/api/chat', async (req, res) => {
         }))
       ],
       temperature: 0.7,
-      max_tokens: 2000
+      max_tokens: 2500
     });
 
     const reply = response.choices[0].message.content || '';
@@ -198,13 +261,22 @@ app.post('/api/generate-logos', async (req, res) => {
       return res.status(400).json({ error: 'logoPrompts with A, B, C are required' });
     }
 
-    console.log('Generating logos...');
+    console.log('Generating logos with flat/SVG-ready constraints...');
+
+    // Enforce anti-mockup constraints on all prompts
+    const promptA = enforceLogoConstraints(logoPrompts.A);
+    const promptB = enforceLogoConstraints(logoPrompts.B);
+    const promptC = enforceLogoConstraints(logoPrompts.C);
+
+    console.log('Option A prompt:', promptA.substring(0, 100) + '...');
+    console.log('Option B prompt:', promptB.substring(0, 100) + '...');
+    console.log('Option C prompt:', promptC.substring(0, 100) + '...');
 
     // Generate all 3 logos in parallel
     const [logoA, logoB, logoC] = await Promise.all([
       openai.images.generate({
         model: 'dall-e-3',
-        prompt: logoPrompts.A,
+        prompt: promptA,
         n: 1,
         size: '1024x1024',
         quality: 'hd',
@@ -212,7 +284,7 @@ app.post('/api/generate-logos', async (req, res) => {
       }),
       openai.images.generate({
         model: 'dall-e-3',
-        prompt: logoPrompts.B,
+        prompt: promptB,
         n: 1,
         size: '1024x1024',
         quality: 'hd',
@@ -220,7 +292,7 @@ app.post('/api/generate-logos', async (req, res) => {
       }),
       openai.images.generate({
         model: 'dall-e-3',
-        prompt: logoPrompts.C,
+        prompt: promptC,
         n: 1,
         size: '1024x1024',
         quality: 'hd',
@@ -231,22 +303,25 @@ app.post('/api/generate-logos', async (req, res) => {
     const options = [
       {
         id: 'A',
+        label: 'Abstract Icon',
         imageUrl: `data:image/png;base64,${logoA.data[0].b64_json}`,
-        prompt: logoPrompts.A
+        prompt: promptA
       },
       {
         id: 'B',
+        label: 'Lettermark',
         imageUrl: `data:image/png;base64,${logoB.data[0].b64_json}`,
-        prompt: logoPrompts.B
+        prompt: promptB
       },
       {
         id: 'C',
+        label: 'Wordmark',
         imageUrl: `data:image/png;base64,${logoC.data[0].b64_json}`,
-        prompt: logoPrompts.C
+        prompt: promptC
       }
     ];
 
-    console.log('Logos generated successfully');
+    console.log('Logos generated successfully (flat/SVG-ready style)');
     res.json({ options });
   } catch (error) {
     console.error('Generate logos API error:', error);
@@ -332,4 +407,3 @@ app.listen(PORT, () => {
   console.log(`API server running on http://localhost:${PORT}`);
   console.log('Make sure your .env file has OPENAI_API_KEY set');
 });
-

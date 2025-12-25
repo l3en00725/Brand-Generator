@@ -19,9 +19,9 @@ const LogoOptions: React.FC<LogoOptionsProps> = ({
   isLoading = false
 }) => {
   const optionLabels: Record<LogoOptionId, { title: string; description: string }> = {
-    A: { title: 'Icon', description: 'Abstract geometric symbol' },
-    B: { title: 'Lettermark', description: 'Stylized initials' },
-    C: { title: 'Wordmark', description: 'Brand name with icon' }
+    A: { title: 'Abstract Icon', description: 'Geometric symbol, no letters' },
+    B: { title: 'Lettermark', description: 'Stylized initials only' },
+    C: { title: 'Wordmark', description: 'Full brand name' }
   };
 
   return (
