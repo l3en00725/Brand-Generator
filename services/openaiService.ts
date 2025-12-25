@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { GPT_MODEL, DALLE_MODEL, GPT_SYSTEM_PROMPT, ANTI_MOCKUP_BLOCK } from '../constants';
+import { GPT_MODEL, DALLE_MODEL, GPT_SYSTEM_PROMPT, ANTI_MOCKUP_BLOCK, ANTI_VARIATION_BLOCK } from '../constants';
 import type { Message, BrandStrategy } from '../types';
 
 // Initialize OpenAI client
@@ -39,11 +39,17 @@ export async function chat(messages: Message[]): Promise<string> {
 export async function generateLogo(prompt: string): Promise<string> {
   const openai = getOpenAIClient();
   
-  // Safety net: ensure the hard anti-mockup constraints are always present.
-  // (We still ask GPT-4o to include them, but never trust it 100%.)
-  const finalPrompt = prompt.includes('Flat logo mark only.')
-    ? prompt
-    : `${prompt}\n\n${ANTI_MOCKUP_BLOCK}`;
+  // Safety nets: never trust the LLM to fully comply.
+  // 1) Strip URLs if they appear (external inspiration links cause "scene" outputs).
+  // 2) Ensure the hard anti-mockup block is present verbatim.
+  // 3) Ensure the "no icon sets / no multiple marks" block is present.
+  const withoutUrls = prompt.replace(/https?:\/\/\S+/g, '').trim();
+  const withMockupBlock = withoutUrls.includes('Flat logo mark only.')
+    ? withoutUrls
+    : `${withoutUrls}\n\n${ANTI_MOCKUP_BLOCK}`;
+  const finalPrompt = withMockupBlock.includes('Single logo only.')
+    ? withMockupBlock
+    : `${withMockupBlock}\n\n${ANTI_VARIATION_BLOCK}`;
 
   const response = await openai.images.generate({
     model: DALLE_MODEL,

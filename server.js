@@ -31,6 +31,16 @@ Designed to work at 24px.
 Must look like a real SVG logo, not a rendered image.
 Centered on a plain white background.`;
 
+const ANTI_VARIATION_BLOCK = `
+Single logo only.
+NO icon sets.
+NO multiple marks.
+NO extra symbols.
+NO alternative concepts shown.
+NO labels like "Option A/B/C".
+NO borders, frames, badges, or app tiles.
+Plain white background only.`;
+
 // =============================================================================
 // LOGO PROMPT TEMPLATES (STRATEGIC DIFFERENTIATION)
 // =============================================================================
@@ -53,26 +63,31 @@ GLOBAL PROMPT REQUIREMENTS (must appear in EACH prompt):
 - Explicitly ban gradients, realism, textures, shadows, and 3D
 - Limit palette: 2 colors max (primary + black). Background must remain white.
 - Small-size rule: must remain legible at 24px; avoid thin details; avoid micro-gaps
+- No “presentation elements”: no extra icons, no icon rows, no example lockups, no tool illustrations
 
 OPTION A — ABSTRACT ICON (no letters):
 - No letters, no initials, no text
 - Simple geometric/symbolic form built from 2–4 primitives; strong silhouette
 - Timeless, brand-agnostic, works as standalone app icon at 24px
+- Avoid literal object pictograms (no tools, no pencils, no wrenches, no rakes)
 
 OPTION B — LETTERMARK (initials only):
 - Stylized initials only (1–3 letters max)
 - Typography-driven with custom letterform modifications (cuts, joins, terminals, negative space)
 - NO pictorial icons or motifs (no leaves/arrows/stars). Only letter shapes.
 - No enclosing shapes unless essential to the letter construction
+- NO extra words (no industry descriptors like "PLUMBING"). Initials only.
 
 OPTION C — WORDMARK (full brand name):
 - Full brand name only
 - Clean modern typography with custom kerning and 1 subtle modification (optional)
 - No tagline. No extra text. No separate icon.
 - Optional: integrate a subtle symbol INTO a letter (no separate decorative icon)
+- Text MUST be spelled exactly as provided. If you cannot guarantee perfect spelling, OMIT all text and output ONLY the icon.
 
 OUTPUT FORMAT:
-- Each prompt must be a single paragraph followed by the mandatory block.
+- Each prompt must be a single paragraph followed by the mandatory block and then:
+${ANTI_VARIATION_BLOCK}
 `;
 
 const GPT_SYSTEM_PROMPT = `You are BrandForge, a brand strategist AI. Your role is to gather requirements and produce a structured brand strategy with logo generation prompts.

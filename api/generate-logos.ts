@@ -1,12 +1,16 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { generateAllLogos } from '../services/openaiService';
 import type { GenerateLogosRequest, GenerateLogosResponse, LogoOption } from '../types';
-import { ANTI_MOCKUP_BLOCK } from '../constants';
+import { ANTI_MOCKUP_BLOCK, ANTI_VARIATION_BLOCK } from '../constants';
 
 function enforceLogoConstraints(prompt: string): string {
-  return prompt.includes('Flat logo mark only.')
-    ? prompt
-    : `${prompt}\n\n${ANTI_MOCKUP_BLOCK}`;
+  const withoutUrls = prompt.replace(/https?:\/\/\S+/g, '').trim();
+  const withMockup = withoutUrls.includes('Flat logo mark only.')
+    ? withoutUrls
+    : `${withoutUrls}\n\n${ANTI_MOCKUP_BLOCK}`;
+  return withMockup.includes('Single logo only.')
+    ? withMockup
+    : `${withMockup}\n\n${ANTI_VARIATION_BLOCK}`;
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
