@@ -110,30 +110,72 @@ async function createSocialAsset(
   height: number,
   brandStrategy: BrandStrategy
 ): Promise<Buffer> {
-  // Resize logo to fit (40% of height)
-  const logoHeight = Math.floor(height * 0.4);
-  const resizedLogo = await sharp(logoBuffer)
-    .resize({ height: logoHeight, fit: 'inside' })
-    .toBuffer();
+  // Deterministic social layout with brand name + tagline (no AI text -> no misspellings).
+  const brandName = brandStrategy.brandName.trim();
+  const tagline = (brandStrategy.tagline || '').trim();
+  const subcopy = tagline || `${brandStrategy.industry}`.trim() || `For ${brandStrategy.audience}`.trim();
 
-  // Parse primary color
-  const hex = brandStrategy.colors.primary.replace('#', '');
+  const primary = brandStrategy.colors.primary || '#0ea5e9';
+  const hex = primary.replace('#', '');
   const r = parseInt(hex.substring(0, 2), 16);
   const g = parseInt(hex.substring(2, 4), 16);
   const b = parseInt(hex.substring(4, 6), 16);
 
-  // Create canvas with brand primary color and center logo
+  const paddingX = Math.round(width * 0.08);
+  const iconSize = Math.min(Math.round(height * 0.42), 220);
+  const iconLeft = paddingX;
+  const iconTop = Math.round((height - iconSize) / 2);
+  const textLeft = iconLeft + iconSize + Math.round(width * 0.04);
+
+  const resizedLogo = await sharp(logoBuffer)
+    .resize(iconSize, iconSize, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
+    .toBuffer();
+
+  // Simple SVG text overlay (works in sharp without relying on system fonts too heavily)
+  const titleSize = Math.max(40, Math.round(height * 0.10));
+  const subSize = Math.max(20, Math.round(height * 0.05));
+  const accentW = Math.min(240, Math.round(width * 0.22));
+  const accentH = 10;
+  const accentY = iconTop + iconSize + 36;
+
+  const svg = `
+  <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+    <style>
+      .title { font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; font-weight: 700; fill: #0B1220; }
+      .sub { font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; font-weight: 400; fill: #475569; }
+    </style>
+    <text x="${textLeft}" y="${iconTop + Math.round(titleSize * 1.2)}" class="title" font-size="${titleSize}">
+      ${escapeXml(brandName)}
+    </text>
+    <text x="${textLeft}" y="${iconTop + Math.round(titleSize * 1.2) + Math.round(subSize * 1.6)}" class="sub" font-size="${subSize}">
+      ${escapeXml(subcopy).slice(0, 72)}
+    </text>
+    <rect x="${iconLeft}" y="${accentY}" width="${accentW}" height="${accentH}" fill="rgb(${r},${g},${b})" />
+  </svg>`;
+
   return sharp({
     create: {
       width,
       height,
       channels: 4,
-      background: { r, g, b, alpha: 1 }
+      background: { r: 255, g: 255, b: 255, alpha: 1 }
     }
   })
-    .composite([{ input: resizedLogo, gravity: 'center' }])
+    .composite([
+      { input: resizedLogo, left: iconLeft, top: iconTop },
+      { input: Buffer.from(svg), left: 0, top: 0 }
+    ])
     .png()
     .toBuffer();
+}
+
+function escapeXml(input: string): string {
+  return input
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
 }
 
 // ============================================

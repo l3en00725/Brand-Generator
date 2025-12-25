@@ -57,6 +57,8 @@ export async function generateLogo(prompt: string): Promise<string> {
     n: 1,
     size: '1024x1024',
     quality: 'hd',
+    // Slightly reduces "stylized" / mockup-y tendencies vs vivid.
+    style: 'natural',
     response_format: 'b64_json'
   });
   

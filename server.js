@@ -79,11 +79,9 @@ OPTION B — LETTERMARK (initials only):
 - NO extra words (no industry descriptors like "PLUMBING"). Initials only.
 
 OPTION C — WORDMARK (full brand name):
-- Full brand name only
-- Clean modern typography with custom kerning and 1 subtle modification (optional)
-- No tagline. No extra text. No separate icon.
-- Optional: integrate a subtle symbol INTO a letter (no separate decorative icon)
-- Text MUST be spelled exactly as provided. If you cannot guarantee perfect spelling, OMIT all text and output ONLY the icon.
+- DO NOT render any text in the image (we will typeset the wordmark in code to avoid misspellings)
+- Generate a clean companion symbol intended to sit left of the brand name in a lockup
+- Same flat constraints: solid fills only; 24px legibility; 2-color max
 
 OUTPUT FORMAT:
 - Each prompt must be a single paragraph followed by the mandatory block and then:
@@ -330,10 +328,10 @@ app.post('/api/generate-logos', async (req, res) => {
   }
 });
 
-// POST /api/generate-assets (simplified - just returns the logo for now)
+// POST /api/generate-assets (local dev: FULL asset package ZIP)
 app.post('/api/generate-assets', async (req, res) => {
   try {
-    const { selectedOption, logoBase64, brandStrategy } = req.body;
+    const { selectedOption, logoBase64, brandStrategy, revision } = req.body;
 
     if (!selectedOption || !logoBase64 || !brandStrategy) {
       return res.status(400).json({ 
@@ -341,12 +339,52 @@ app.post('/api/generate-assets', async (req, res) => {
       });
     }
 
-    // For local dev, we'll create a simple ZIP with just the logo
-    // Full asset generation requires Sharp which needs native bindings
-    
+    const sharp = (await import('sharp')).default;
     const archiver = (await import('archiver')).default;
     const { Writable } = await import('stream');
-    
+
+    let finalStrategy = { ...brandStrategy };
+    if (revision?.type === 'color' && revision?.shade) {
+      finalStrategy = {
+        ...finalStrategy,
+        colors: {
+          ...finalStrategy.colors,
+          primary: adjustHexColor(finalStrategy.colors.primary, revision.shade),
+        }
+      };
+    }
+
+    const cleanBase64 = logoBase64.replace(/^data:image\/png;base64,/, '');
+    const logoBuffer = Buffer.from(cleanBase64, 'base64');
+
+    const assets = new Map();
+
+    // LOGOS
+    assets.set('logos/logo.png', await resizeContain(sharp, logoBuffer, 512, 512));
+    assets.set('logos/logo-transparent.png', await removeWhiteBg(sharp, logoBuffer));
+    assets.set('logos/logo-dark.png', await addBg(sharp, logoBuffer, '#1a1a1a'));
+    assets.set('logos/logo-light.png', await addBg(sharp, logoBuffer, '#ffffff'));
+    assets.set('logos/logo@2x.png', await resizeContain(sharp, logoBuffer, 1024, 1024));
+    assets.set('logos/logo@4x.png', await resizeContain(sharp, logoBuffer, 2048, 2048));
+
+    // SOCIAL (includes icon + brand name + subcopy)
+    assets.set('social/open-graph.png', await createSocial(sharp, logoBuffer, 1200, 630, finalStrategy));
+    assets.set('social/x-header.png', await createSocial(sharp, logoBuffer, 1500, 500, finalStrategy));
+    assets.set('social/linkedin-banner.png', await createSocial(sharp, logoBuffer, 1584, 396, finalStrategy));
+    assets.set('social/instagram-profile.png', await resizeContain(sharp, logoBuffer, 320, 320));
+
+    // ICONS
+    for (const size of [16, 32, 64, 128, 256]) {
+      assets.set(`icons/favicon-${size}.png`, await resizeContain(sharp, logoBuffer, size, size));
+    }
+    assets.set('icons/app-icon-1024.png', await resizeContain(sharp, logoBuffer, 1024, 1024));
+
+    // METADATA
+    assets.set('metadata/colors.json', Buffer.from(JSON.stringify(finalStrategy.colors, null, 2)));
+    assets.set('metadata/fonts.txt', Buffer.from('Heading: Inter\nBody: Inter'));
+    assets.set('metadata/README.txt', Buffer.from(generateReadme(finalStrategy.brandName)));
+
+    // ZIP archive
     const chunks = [];
     const writableStream = new Writable({
       write(chunk, encoding, callback) {
@@ -356,41 +394,23 @@ app.post('/api/generate-assets', async (req, res) => {
     });
 
     const archive = archiver('zip', { zlib: { level: 9 } });
-    
-    archive.on('error', (err) => {
-      throw err;
-    });
+    archive.on('error', (err) => { throw err; });
+    archive.pipe(writableStream);
+
+    for (const [path, buffer] of assets.entries()) {
+      archive.append(buffer, { name: path });
+    }
 
     writableStream.on('finish', () => {
       const zipBuffer = Buffer.concat(chunks);
-      const filename = `${brandStrategy.brandName.toLowerCase().replace(/\s+/g, '-')}-brand-assets.zip`;
-      
+      const filename = `${sanitizeFilename(finalStrategy.brandName)}-brand-assets.zip`;
       res.setHeader('Content-Type', 'application/zip');
       res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
       res.setHeader('Content-Length', zipBuffer.length);
       res.send(zipBuffer);
     });
 
-    archive.pipe(writableStream);
-
-    // Add logo
-    const cleanBase64 = logoBase64.replace(/^data:image\/png;base64,/, '');
-    archive.append(Buffer.from(cleanBase64, 'base64'), { name: 'logos/logo.png' });
-    
-    // Add colors.json
-    archive.append(JSON.stringify(brandStrategy.colors, null, 2), { name: 'metadata/colors.json' });
-    
-    // Add README
-    const readme = `${brandStrategy.brandName} Brand Assets
-========================
-Generated by BrandForge AI
-
-Note: This is a development build with limited assets.
-Deploy to Vercel for full asset generation.
-`;
-    archive.append(readme, { name: 'README.txt' });
-
-    archive.finalize();
+    await archive.finalize();
   } catch (error) {
     console.error('Generate assets API error:', error);
     res.status(500).json({ 
@@ -399,6 +419,165 @@ Deploy to Vercel for full asset generation.
     });
   }
 });
+
+function sanitizeFilename(name) {
+  return String(name || 'brand')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+function adjustHexColor(hex, shade) {
+  const cleanHex = String(hex || '#000000').replace('#', '');
+  let r = parseInt(cleanHex.substring(0, 2), 16);
+  let g = parseInt(cleanHex.substring(2, 4), 16);
+  let b = parseInt(cleanHex.substring(4, 6), 16);
+  const factor = shade === 'lighter' ? 1.2 : 0.8;
+  r = Math.min(255, Math.round(r * factor));
+  g = Math.min(255, Math.round(g * factor));
+  b = Math.min(255, Math.round(b * factor));
+  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+}
+
+async function resizeContain(sharpLib, buffer, width, height) {
+  return sharpLib(buffer)
+    .resize(width, height, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
+    .png()
+    .toBuffer();
+}
+
+async function removeWhiteBg(sharpLib, buffer) {
+  const { data, info } = await sharpLib(buffer)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+    if (r > 240 && g > 240 && b > 240) data[i + 3] = 0;
+  }
+
+  return sharpLib(data, { raw: { width: info.width, height: info.height, channels: 4 } })
+    .png()
+    .toBuffer();
+}
+
+async function addBg(sharpLib, buffer, color) {
+  const meta = await sharpLib(buffer).metadata();
+  const width = meta.width || 1024;
+  const height = meta.height || 1024;
+  const hex = String(color || '#ffffff').replace('#', '');
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+
+  return sharpLib({ create: { width, height, channels: 4, background: { r, g, b, alpha: 1 } } })
+    .composite([{ input: buffer, gravity: 'center' }])
+    .png()
+    .toBuffer();
+}
+
+function escapeXml(input) {
+  return String(input || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+function socialSubcopy(strategy) {
+  const tagline = String(strategy?.tagline || '').trim();
+  if (tagline) return tagline;
+  const industry = String(strategy?.industry || '').trim();
+  const audience = String(strategy?.audience || '').trim();
+  if (industry && audience) return `${industry} for ${audience}`.slice(0, 72);
+  if (industry) return industry.slice(0, 72);
+  if (audience) return `For ${audience}`.slice(0, 72);
+  return 'Professional services, delivered.';
+}
+
+async function createSocial(sharpLib, logoBuffer, width, height, strategy) {
+  const brandName = String(strategy?.brandName || 'Brand').trim();
+  const subcopy = socialSubcopy(strategy);
+  const primary = String(strategy?.colors?.primary || '#0ea5e9');
+  const hex = primary.replace('#', '');
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+
+  const paddingX = Math.round(width * 0.08);
+  const iconSize = Math.min(Math.round(height * 0.42), 220);
+  const iconLeft = paddingX;
+  const iconTop = Math.round((height - iconSize) / 2);
+  const textLeft = iconLeft + iconSize + Math.round(width * 0.04);
+
+  const resizedLogo = await sharpLib(logoBuffer)
+    .resize(iconSize, iconSize, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
+    .toBuffer();
+
+  const titleSize = Math.max(40, Math.round(height * 0.10));
+  const subSize = Math.max(20, Math.round(height * 0.05));
+  const accentW = Math.min(240, Math.round(width * 0.22));
+  const accentH = 10;
+  const accentY = iconTop + iconSize + 36;
+
+  const svg = `
+  <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+    <style>
+      .title { font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; font-weight: 700; fill: #0B1220; }
+      .sub { font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; font-weight: 400; fill: #475569; }
+    </style>
+    <text x="${textLeft}" y="${iconTop + Math.round(titleSize * 1.2)}" class="title" font-size="${titleSize}">
+      ${escapeXml(brandName)}
+    </text>
+    <text x="${textLeft}" y="${iconTop + Math.round(titleSize * 1.2) + Math.round(subSize * 1.6)}" class="sub" font-size="${subSize}">
+      ${escapeXml(subcopy).slice(0, 72)}
+    </text>
+    <rect x="${iconLeft}" y="${accentY}" width="${accentW}" height="${accentH}" fill="rgb(${r},${g},${b})" />
+  </svg>`;
+
+  return sharpLib({ create: { width, height, channels: 4, background: { r: 255, g: 255, b: 255, alpha: 1 } } })
+    .composite([
+      { input: resizedLogo, left: iconLeft, top: iconTop },
+      { input: Buffer.from(svg), left: 0, top: 0 },
+    ])
+    .png()
+    .toBuffer();
+}
+
+function generateReadme(brandName) {
+  return `${brandName} Brand Assets
+========================
+
+LOGOS/
+- logo.png: Standard logo (512x512)
+- logo-transparent.png: Transparent background version
+- logo-dark.png: For use on dark backgrounds
+- logo-light.png: For use on light backgrounds
+- logo@2x.png: High resolution (1024x1024)
+- logo@4x.png: Extra high resolution (2048x2048)
+
+SOCIAL/
+- open-graph.png: Website sharing preview (1200x630)
+- x-header.png: X/Twitter header (1500x500)
+- linkedin-banner.png: LinkedIn banner (1584x396)
+- instagram-profile.png: Instagram profile (320x320)
+
+ICONS/
+- favicon-16/32/64/128/256.png: Website favicons
+- app-icon-1024.png: App store icon
+
+METADATA/
+- colors.json: Brand color palette (HEX values)
+- fonts.txt: Recommended fonts
+- README.txt: This file
+
+Generated by BrandForge AI
+`;
+}
 
 const PORT = 3001;
 app.listen(PORT, () => {

@@ -58,12 +58,10 @@ OPTION B — LETTERMARK (initials only):
 - No enclosing shapes unless essential to the letter construction
 - NO extra words (no industry descriptors like "PLUMBING"). Initials only.
 
-OPTION C — WORDMARK (full brand name):
-- Full brand name only
-- Clean modern typography with custom kerning and 1 subtle modification (optional)
-- No tagline. No extra text. No separate icon.
-- Optional: integrate a subtle symbol INTO a letter (no separate decorative icon)
-- Text MUST be spelled exactly as provided. If you cannot guarantee perfect spelling, OMIT all text and output ONLY the icon.
+OPTION C — WORDMARK (text rendered by code; image must be icon-only):
+- DO NOT render any text in the image (we will typeset the wordmark in code to avoid misspellings)
+- Generate a clean companion symbol intended to sit left of the brand name in a lockup
+- Same flat constraints: solid fills only; 24px legibility; 2-color max
 
 OUTPUT FORMAT:
 - Each prompt must be a single paragraph followed by the mandatory block and then:
