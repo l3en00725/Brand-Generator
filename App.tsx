@@ -66,7 +66,7 @@ function App() {
         <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-[128px] pointer-events-none"></div>
 
         <div className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 flex flex-col">
-          <div className="text-center mb-10">
+          <div className="text-center mb-12">
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-serif text-white mb-6 tracking-tight">
               Build a professional brand identity <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-400 to-purple-400">
@@ -78,7 +78,9 @@ function App() {
             </p>
           </div>
           
-          <ChatInterface />
+          <div className="flex-1 flex items-start justify-center">
+            <ChatInterface />
+          </div>
         </div>
 
         {/* Scroll Indicator */}
