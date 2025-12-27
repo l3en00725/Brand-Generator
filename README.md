@@ -1,20 +1,90 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# BrandForge AI - Branding Center
 
-# Run and deploy your AI Studio app
+A Next.js 15 application that generates professional brand identities using AI-powered logo generation.
 
-This contains everything you need to run your app locally.
+## Architecture
 
-View your app in AI Studio: https://ai.studio/apps/drive/1TwsdyhXu-oZpDQRpVJAg5GKM_ezyNdRV
+- **Next.js 15** (App Router) with TypeScript
+- **Claude Sonnet 4** for brand strategy and discovery
+- **Gemini 3.0 Flash** for SVG logo generation
+- **Imagen** (placeholder) for PNG logo generation
+- **Vercel AI SDK UI** for streaming responses
+- **Zod** for validation and type safety
 
-## Run Locally
+## Key Features
 
-**Prerequisites:**  Node.js
+- Progressive streaming of brand discovery conversation
+- Parallel SVG + PNG logo generation (3-8 variations)
+- SVG validation with automatic retries
+- Fail-open design (SVG failure never blocks PNG display)
+- V1 scope: Logo variations only (no asset packs yet)
 
+## Development Setup
 
 1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+```bash
+npm install
+```
+
+2. Set up environment variables (copy `.env.example` to `.env`):
+```bash
+ANTHROPIC_API_KEY=sk-ant-api03-...
+GEMINI_API_KEY=...
+```
+
+3. Run development server:
+```bash
+npm run dev
+```
+
+4. Open [http://localhost:3000](http://localhost:3000)
+
+## Project Structure
+
+```
+src/
+├── app/                    # Next.js App Router
+│   ├── api/               # API routes (chat, generate)
+│   ├── create/            # Main branding flow page
+│   └── layout.tsx         # Root layout
+├── components/
+│   └── branding/          # Branding UI components
+├── lib/
+│   ├── ai/                # AI client wrappers (Claude, Gemini, Imagen)
+│   ├── skills/            # Claude Skills (static prompts)
+│   └── validation/        # Zod schemas and validators
+└── schemas/               # Shared Zod schemas
+```
+
+## MCP Servers (Dev-Time Only)
+
+MCP servers run locally via Cursor and are **never deployed to production**. See `docs/mcp-servers.md` for details.
+
+## Rules of the System
+
+1. **MCP is dev-time only** - Never import MCP clients in runtime code
+2. **Skills are static strings** - No dynamic prompt composition
+3. **Validation before trust** - All inputs/outputs validated with Zod
+4. **Fail open, not closed** - Show partial results if available
+5. **Stream everything** - Progressive rendering for perceived speed
+6. **No state libraries** - Use URL state (nuqs) or component state only
+7. **Zod is the schema language** - One schema per concept, shared client/server
+
+## V1 Scope
+
+- Brand discovery chat (3 questions)
+- Brand strategy generation (palette, rationale, archetype)
+- Logo variation generation (SVG + PNG, 3-8 variations)
+- Download selected logo (SVG or PNG)
+
+**Not included in V1:**
+- Full asset packs (21-asset ZIP)
+- Logo lockups (icon + name combinations)
+- Social media assets
+- Favicon generation
+
+These will be added in V2+.
+
+## License
+
+Private project.
