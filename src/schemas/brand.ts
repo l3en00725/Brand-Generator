@@ -31,7 +31,11 @@ export const brandArchetypeSchema = z.enum([
 
 export type BrandArchetype = z.infer<typeof brandArchetypeSchema>;
 
-export const brandStrategySchema = z.object({
+export const styleAxisSchema = z.enum(['organic', 'geometric', 'bold']);
+
+export type StyleAxis = z.infer<typeof styleAxisSchema>;
+
+const brandStrategyFields = {
   brandName: z.string().min(1).max(100),
   industry: z.string().min(1).max(200),
   audience: z.string().min(1).max(200),
@@ -41,9 +45,18 @@ export const brandStrategySchema = z.object({
   rationale: z.string().min(10).max(500),
   colors: brandColorsSchema,
   logoDirection: z.string().min(10).max(300), // Abstract concept, not prompt
+};
+
+export const brandStrategySchema = z.object({
+  ...brandStrategyFields,
+  styleAxis: styleAxisSchema,
 });
 
 export type BrandStrategy = z.infer<typeof brandStrategySchema>;
+
+export const brandStrategyDraftSchema = z.object(brandStrategyFields);
+
+export type BrandStrategyDraft = z.infer<typeof brandStrategyDraftSchema>;
 
 // ============================================================================
 // Logo Variation Schema
@@ -60,11 +73,20 @@ export const logoVariationStatusSchema = z.enum([
 
 export type LogoVariationStatus = z.infer<typeof logoVariationStatusSchema>;
 
+export const logoVariationTypeSchema = z.enum([
+  'symbol',
+  'lettermark',
+  'combination',
+]);
+
+export type LogoVariationType = z.infer<typeof logoVariationTypeSchema>;
+
 export const logoVariationSchema = z.object({
   id: z.string().uuid(),
   svg: z.string().optional(),
   pngUrl: z.string().url().optional(),
   status: logoVariationStatusSchema,
+  type: logoVariationTypeSchema,
   errors: z.array(z.string()).optional(),
 });
 
@@ -76,7 +98,8 @@ export type LogoVariation = z.infer<typeof logoVariationSchema>;
 
 export const generateRequestSchema = z.object({
   strategy: brandStrategySchema,
-  variationCount: z.number().int().min(3).max(8).default(5),
+  // We always return three curated variations to enforce quality over volume
+  variationCount: z.number().int().min(3).max(3).default(3),
 });
 
 export type GenerateRequest = z.infer<typeof generateRequestSchema>;

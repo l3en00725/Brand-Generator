@@ -2,9 +2,8 @@
 
 import { BrandChat } from '@/components/branding/brand-chat';
 import { LogoGrid } from '@/components/branding/logo-grid';
-import { BrandStrategy, LogoVariation } from '@/schemas/brand';
+import { BrandStrategyDraft, LogoVariation, StyleAxis } from '@/schemas/brand';
 import { useState, useCallback } from 'react';
-import { validateBrandStrategy } from '@/lib/validation/brand';
 
 /**
  * Create Page
@@ -17,13 +16,21 @@ import { validateBrandStrategy } from '@/lib/validation/brand';
  */
 
 export default function CreatePage() {
-  const [strategy, setStrategy] = useState<BrandStrategy | null>(null);
+  const [strategyDraft, setStrategyDraft] = useState<BrandStrategyDraft | null>(null);
+  const [styleAxis, setStyleAxis] = useState<StyleAxis | null>(null);
   const [variations, setVariations] = useState<LogoVariation[] | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
+  const handleStyleAxisChange = useCallback((axis: StyleAxis) => {
+    setStyleAxis(axis);
+    setVariations(null);
+  }, []);
+
   // Trigger logo generation
   const handleGenerate = useCallback(async () => {
-    if (!strategy) return;
+    if (!strategyDraft || !styleAxis) return;
+
+    const strategy = { ...strategyDraft, styleAxis };
 
     setIsGenerating(true);
     setVariations(null);
@@ -34,7 +41,7 @@ export default function CreatePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           strategy,
-          variationCount: 5,
+          variationCount: 3,
         }),
       });
 
@@ -49,7 +56,7 @@ export default function CreatePage() {
     } finally {
       setIsGenerating(false);
     }
-  }, [strategy]);
+  }, [strategyDraft, styleAxis]);
 
   return (
     <div className="min-h-screen bg-gray-900 p-8">
@@ -57,14 +64,22 @@ export default function CreatePage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left: Chat */}
           <div className="lg:sticky lg:top-8 lg:h-[calc(100vh-4rem)]">
-            <BrandChat onStrategyExtracted={setStrategy} />
+            <BrandChat
+              onStrategyExtracted={(draft) => {
+                setStrategyDraft(draft);
+                setStyleAxis(null);
+                setVariations(null);
+              }}
+            />
           </div>
 
           {/* Right: Strategy + Variations */}
           <div>
-            {strategy ? (
+            {strategyDraft ? (
               <LogoGrid
-                strategy={strategy}
+                strategy={strategyDraft}
+                styleAxis={styleAxis}
+                onStyleAxisChange={handleStyleAxisChange}
                 onGenerate={handleGenerate}
                 variations={variations}
                 isGenerating={isGenerating}

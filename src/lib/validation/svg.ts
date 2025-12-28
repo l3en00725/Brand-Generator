@@ -6,8 +6,10 @@ import { z } from 'zod';
 // Lightweight validation: string checks + forbidden tags
 // This runs server-side only (JSDOM not available in Edge runtime)
 
-const FORBIDDEN_TAGS = ['defs', 'filter', 'clipPath', 'image', 'foreignObject'];
+const FORBIDDEN_TAGS = ['defs', 'filter', 'clipPath', 'image', 'foreignObject', 'text'];
 const MAX_SVG_LENGTH = 10000; // Complexity cap
+const MIN_VECTOR_SHAPES = 2; // Avoid single-shape placeholders
+const MIN_PATH_COMPLEXITY = 24; // Require at least one intentional path string length
 
 /**
  * Validates SVG structure without full DOM parsing (Edge-compatible).
@@ -38,6 +40,27 @@ export function validateSvgStructure(svg: string): {
     if (tagRegex.test(svgLower)) {
       return { valid: false, reason: `SVG contains forbidden tag: <${tag}>` };
     }
+  }
+
+  const shapeCount = (svgLower.match(/<(path|circle|rect|polygon|polyline|line|ellipse)[\s>]/g) || []).length;
+  if (shapeCount < MIN_VECTOR_SHAPES) {
+    return { valid: false, reason: 'SVG must use at least two vector shapes to avoid placeholder marks' };
+  }
+
+  // Require at least one custom path with meaningful commands
+  const pathMatches = Array.from(svgLower.matchAll(/<path[^>]*d="([^"]+)"/g));
+  if (pathMatches.length === 0) {
+    return { valid: false, reason: 'SVG must include at least one custom <path> for intentional geometry' };
+  }
+
+  const hasComplexPath = pathMatches.some((match) => match[1].length >= MIN_PATH_COMPLEXITY && /[a-z]{2,}/i.test(match[1]));
+  if (!hasComplexPath) {
+    return { valid: false, reason: 'SVG paths are too simple—use layered commands, not single-line doodles' };
+  }
+
+  // Reject obvious placeholders
+  if (/placeholder|lorem|dummy/.test(svgLower)) {
+    return { valid: false, reason: 'SVG appears to contain placeholder content' };
   }
 
   // Check for <svg> root element

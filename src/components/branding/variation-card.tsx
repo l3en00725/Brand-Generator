@@ -17,8 +17,20 @@ interface VariationCardProps {
 
 export function VariationCard({ variation, brandName }: VariationCardProps) {
   const [selectedFormat, setSelectedFormat] = useState<'svg' | 'png'>(
-    variation.svg ? 'svg' : 'png'
+    variation.pngUrl ? 'png' : 'svg'
   );
+
+  const typeLabel: Record<LogoVariation['type'], string> = {
+    symbol: 'Symbol Mark',
+    lettermark: 'Lettermark',
+    combination: 'Combination Mark',
+  };
+
+  const typeHelper: Record<LogoVariation['type'], string> = {
+    symbol: 'Icon-only, no letters. Built to work as an app icon.',
+    lettermark: 'Custom initials rendered as vector geometry.',
+    combination: 'Balanced mark designed to sit beside a wordmark.',
+  };
 
   const handleDownload = () => {
     if (selectedFormat === 'svg' && variation.svg) {
@@ -46,31 +58,38 @@ export function VariationCard({ variation, brandName }: VariationCardProps) {
 
   return (
     <div className="p-6 bg-gray-800 rounded-2xl border border-gray-700">
-      {/* Format Toggle */}
-      {hasSvg && hasPng && (
-        <div className="flex gap-2 mb-4">
-          <button
-            onClick={() => setSelectedFormat('svg')}
-            className={`px-3 py-1 text-xs rounded-full transition-all ${
-              selectedFormat === 'svg'
-                ? 'bg-brand-600 text-white'
-                : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
-            }`}
-          >
-            SVG
-          </button>
-          <button
-            onClick={() => setSelectedFormat('png')}
-            className={`px-3 py-1 text-xs rounded-full transition-all ${
-              selectedFormat === 'png'
-                ? 'bg-brand-600 text-white'
-                : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
-            }`}
-          >
-            PNG
-          </button>
+      <div className="flex items-start justify-between mb-3 gap-3">
+        <div>
+          <p className="text-xs uppercase tracking-[0.08em] text-gray-400">
+            {typeLabel[variation.type]}
+          </p>
+          <p className="text-sm text-gray-300 leading-snug">{typeHelper[variation.type]}</p>
         </div>
-      )}
+        {hasSvg && hasPng && (
+          <div className="flex gap-2">
+            <button
+              onClick={() => setSelectedFormat('svg')}
+              className={`px-3 py-1 text-xs rounded-full transition-all ${
+                selectedFormat === 'svg'
+                  ? 'bg-brand-600 text-white'
+                  : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+              }`}
+            >
+              SVG
+            </button>
+            <button
+              onClick={() => setSelectedFormat('png')}
+              className={`px-3 py-1 text-xs rounded-full transition-all ${
+                selectedFormat === 'png'
+                  ? 'bg-brand-600 text-white'
+                  : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+              }`}
+            >
+              PNG
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Logo Preview */}
       <div className="aspect-square bg-white rounded-xl overflow-hidden mb-4 shadow-inner flex items-center justify-center p-8">
@@ -85,20 +104,6 @@ export function VariationCard({ variation, brandName }: VariationCardProps) {
           <div className="text-gray-400 text-sm">No preview available</div>
         )}
       </div>
-
-      {/* Status & Errors */}
-      {variation.status !== 'completed' && (
-        <div className="mb-4">
-          <p className="text-xs text-gray-400 mb-1">Status: {variation.status}</p>
-          {variation.errors && variation.errors.length > 0 && (
-            <ul className="text-xs text-red-400 space-y-1">
-              {variation.errors.map((error, idx) => (
-                <li key={idx}>• {error}</li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
 
       {/* Download Button */}
       <button
