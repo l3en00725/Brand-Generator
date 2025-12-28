@@ -22,13 +22,35 @@
  */
 
 import { GoogleAuth } from 'google-auth-library';
+import { LogoVariationType, StyleAxis } from '@/schemas/brand';
 
 export interface PngGenerationOptions {
   brandName: string;
   logoDirection: string;
   primaryColor: string;
   industry: string;
+  styleAxis: StyleAxis;
+  variationType: LogoVariationType;
+  intent: string;
 }
+
+const STYLE_CONSTRAINTS: Record<StyleAxis, string[]> = {
+  organic: [
+    'Rounded forms and natural curves; avoid sharp angles',
+    'Leaf, growth, or flowing motion metaphors',
+    'Softer visual weight, no rigid geometry',
+  ],
+  geometric: [
+    'Straight lines, symmetry, and grid-friendly construction',
+    'Consistent stroke weight and crisp junctions',
+    'Avoid organic curves or hand-drawn wobble',
+  ],
+  bold: [
+    'Fewer shapes with thick strokes and high contrast',
+    'Strong silhouettes with confident negative space',
+    'Prioritize impact over fine detail',
+  ],
+};
 
 /**
  * Get authenticated Google Auth client
@@ -63,9 +85,22 @@ function getGoogleAuthClient(): GoogleAuth {
  * Keeps prompt minimal and brand-safe (logo, flat, vector-like, white background)
  */
 function buildLogoPrompt(options: PngGenerationOptions): string {
-  const { brandName, logoDirection, primaryColor, industry } = options;
+  const { brandName, logoDirection, primaryColor, industry, intent, styleAxis } = options;
 
-  return `A minimalist, professional logo mark for "${brandName}", a ${industry} brand. ${logoDirection}. Flat design, vector-style appearance, solid shapes only. Primary color: ${primaryColor}. White background. Clean and simple, designed to work at small sizes. No gradients, shadows, or 3D effects.`;
+  const styleRequirements = STYLE_CONSTRAINTS[styleAxis]
+    .map((line) => `- ${line}`)
+    .join('\n');
+
+  return `Design a ${intent}
+
+Brand: "${brandName}" (${industry})
+Direction: ${logoDirection}
+Palette: prioritize ${primaryColor} on white
+
+Style guardrails (${styleAxis}):
+${styleRequirements}
+
+Requirements: flat vector feel, bold silhouette readable at 32px, single-color capable, avoid gradients/shadows/3D, no text except stylized initials where requested, use at least two purposeful shapes with balanced negative space, avoid lone circles/squares/triangles or clipart. Do not deviate from the style guardrails above. Deliver a clean 1:1 composition that could ship as-is.`;
 }
 
 /**
@@ -155,6 +190,13 @@ export async function generatePngVariation(
       };
     }
 
+    if (base64Data.length < 2000) {
+      return {
+        pngUrl: null,
+        errors: ['Imagen returned an image that is too small to be legible'],
+      };
+    }
+
     // Return as data URL for easy use in frontend
     const pngUrl = `data:image/png;base64,${base64Data}`;
 
@@ -179,9 +221,8 @@ export async function generatePngVariation(
  * Each variation is independent, so failures don't cascade
  */
 export async function generatePngVariations(
-  options: PngGenerationOptions,
-  count: number
+  options: PngGenerationOptions[]
 ): Promise<Array<{ pngUrl: string | null; errors: string[] }>> {
-  const promises = Array.from({ length: count }, () => generatePngVariation(options));
+  const promises = options.map((option) => generatePngVariation(option));
   return Promise.all(promises);
 }
