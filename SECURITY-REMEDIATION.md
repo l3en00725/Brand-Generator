@@ -1,6 +1,6 @@
 # Security dependency remediation — 2026-10-22
 
-Next.js 15.5.28, compatible React 19.2.4, and refreshed dependencies remove all matches in the local October 21 OSV npm snapshot plus supplemental advisories. Scoped Next.js overrides select PostCSS 8.5.23 and Sharp 0.35.5 instead of retained affected copies. This describes the checked-in npm lockfile, not the production deployment.
+Next.js 15.5.28, compatible React 19.2.4, and refreshed dependencies reduce the local October 21 OSV matches to one moderate transitive uuid 9.0.1 finding after all affected ranges are retained. The owning Google auth dependency needs a compatible upgrade. Scoped Next.js overrides select PostCSS 8.5.23 and Sharp 0.35.5 instead of retained affected copies. This describes the checked-in npm lockfile, not the production deployment.
 
 Validation: clean `npm ci --ignore-scripts --no-audit` passed on Node 24.22.1. The production build compiled application bundles, then failed type checking at `api/chat.ts:1`: missing `@vercel/node` types. The baseline manifest does not declare that package either; an original-version baseline build has not been reproduced. Do not treat this draft as release-ready.
 
