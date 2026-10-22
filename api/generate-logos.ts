@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { NextApiRequest, NextApiResponse } from 'next';
 import { generateAllLogos } from '../services/openaiService';
 import type { GenerateLogosRequest, GenerateLogosResponse, LogoOption } from '../types';
 import { ANTI_MOCKUP_BLOCK, ANTI_VARIATION_BLOCK } from '../constants';
@@ -13,7 +13,7 @@ function enforceLogoConstraints(prompt: string): string {
     : `${withMockup}\n\n${ANTI_VARIATION_BLOCK}`;
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Only allow POST
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });

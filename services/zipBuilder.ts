@@ -1,4 +1,4 @@
-import archiver from 'archiver';
+import { ZipArchive } from 'archiver';
 import { Writable } from 'stream';
 
 // ============================================
@@ -20,7 +20,7 @@ export async function createZipFromAssets(
     });
 
     // Create archiver instance
-    const archive = archiver('zip', {
+    const archive = new ZipArchive({
       zlib: { level: 9 } // Maximum compression
     });
 
