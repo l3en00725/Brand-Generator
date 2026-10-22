@@ -1,6 +1,7 @@
 'use client';
 
 import { useChat } from '@ai-sdk/react';
+import { DefaultChatTransport } from 'ai';
 import { useEffect, useRef, useState } from 'react';
 import { MessageBubble } from './message-bubble';
 import { BrandStrategy } from '@/schemas/brand';
@@ -19,63 +20,27 @@ interface BrandChatProps {
 }
 
 export function BrandChat({ onStrategyExtracted }: BrandChatProps) {
-  const [hasInitialized, setHasInitialized] = useState(false);
   const [localInput, setLocalInput] = useState('');
-
-  // #region agent log
-  useEffect(() => {
-    fetch('http://127.0.0.1:7244/ingest/4176329a-c639-450a-ae71-1ad22ccc0226',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'brand-chat.tsx:23',message:'Component mount',data:{hasReact:typeof React !== 'undefined',hasUseState:typeof useState,hasUseEffect:typeof useEffect},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'H8'})}).catch(()=>{});
-  }, []);
-  // #endregion
-
-  let chatResult;
-  try {
-    // #region agent log
-    fetch('http://127.0.0.1:7244/ingest/4176329a-c639-450a-ae71-1ad22ccc0226',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'brand-chat.tsx:32',message:'About to call useChat',data:{useChatType:typeof useChat},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'H6'})}).catch(()=>{});
-    // #endregion
-    
-    chatResult = useChat({
-      api: '/api/chat',
-      initialMessages: [
-        {
-          id: 'initial-greeting',
-          role: 'assistant',
-          content: "Hello! I'm Claude, your AI branding assistant. I'd love to help you create an amazing brand identity. To get started, could you tell me the name of your business or project?",
-        },
-      ] as any,
-      onFinish: (message) => {
-        // Extract brand strategy JSON from final message
-        const text = getMessageContent(message);
-        const jsonMatch = text.match(/```json\s*([\s\S]*?)\s*```/);
-        if (jsonMatch && jsonMatch[1]) {
-          try {
-            const extracted = JSON.parse(jsonMatch[1]);
-            const validated = validateBrandStrategy(extracted);
-            onStrategyExtracted?.(validated);
-          } catch (err) {
-            console.error('Failed to extract/validate brand strategy:', err);
-          }
+  const { messages, sendMessage, status, error } = useChat({
+    transport: new DefaultChatTransport({ api: '/api/chat' }),
+    messages: [{
+      id: 'initial-greeting',
+      role: 'assistant',
+      parts: [{ type: 'text', text: "Hello! I'm Claude, your AI branding assistant. I'd love to help you create an amazing brand identity. To get started, could you tell me the name of your business or project?" }],
+    }],
+    onFinish: ({ message }) => {
+      const text = getMessageContent(message);
+      const jsonMatch = text.match(/```json\s*([\s\S]*?)\s*```/);
+      if (jsonMatch?.[1]) {
+        try {
+          onStrategyExtracted?.(validateBrandStrategy(JSON.parse(jsonMatch[1])));
+        } catch (err) {
+          console.error('Failed to extract/validate brand strategy:', err);
         }
-      },
-    });
-    
-    // #region agent log
-    fetch('http://127.0.0.1:7244/ingest/4176329a-c639-450a-ae71-1ad22ccc0226',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'brand-chat.tsx:52',message:'useChat returned',data:{hasResult:!!chatResult,resultKeys:chatResult ? Object.keys(chatResult) : []},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'H6'})}).catch(()=>{});
-    // #endregion
-  } catch (err) {
-    // #region agent log
-    fetch('http://127.0.0.1:7244/ingest/4176329a-c639-450a-ae71-1ad22ccc0226',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'brand-chat.tsx:56',message:'useChat error',data:{error:err.message,stack:err.stack},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'H6'})}).catch(()=>{});
-    // #endregion
-    throw err;
-  }
-
-  const { messages, input, handleSubmit, handleInputChange, isLoading, error, append, sendMessage } = chatResult;
-
-  // #region agent log
-  useEffect(() => {
-    fetch('http://127.0.0.1:7244/ingest/4176329a-c639-450a-ae71-1ad22ccc0226',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'brand-chat.tsx:42',message:'useChat hook state',data:{input:typeof input,handleInputChange:typeof handleInputChange,handleSubmit:typeof handleSubmit,append:typeof append,messagesLength:messages?.length,messages:messages,isLoading,hasError:!!error},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'H1,H2'})}).catch(()=>{});
-  }, [input, handleInputChange, handleSubmit, append, messages, isLoading, error]);
-  // #endregion
+      }
+    },
+  });
+  const isLoading = status === 'submitted' || status === 'streaming';
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -151,29 +116,15 @@ export function BrandChat({ onStrategyExtracted }: BrandChatProps) {
       {/* Input Area */}
       <form onSubmit={(e) => {
         e.preventDefault();
-        const textToSend = (input || localInput || '').trim();
+        const textToSend = localInput.trim();
         if (!textToSend || isLoading) return;
-        
-        // Try handleSubmit first (standard useChat flow)
-        if (handleSubmit && handleInputChange) {
-          handleSubmit(e);
-        } else if (sendMessage) {
-          // Fallback: use sendMessage directly
-          sendMessage({ role: 'user', content: textToSend });
-          setLocalInput('');
-        }
+        void sendMessage({ text: textToSend });
+        setLocalInput('');
       }} className="px-4 pb-4">
         <div className="relative">
           <input
-            value={(input !== undefined && input !== null) ? input : localInput}
-            onChange={(e) => {
-              const value = e.target.value;
-              if (handleInputChange) {
-                handleInputChange(e);
-              } else {
-                setLocalInput(value);
-              }
-            }}
+            value={localInput}
+            onChange={(e) => setLocalInput(e.target.value)}
             placeholder="Type your answer here..."
             className="w-full bg-gray-800 text-white placeholder-gray-500 border border-gray-700 rounded-full py-4 pl-6 pr-14 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all"
             disabled={isLoading}
@@ -181,7 +132,7 @@ export function BrandChat({ onStrategyExtracted }: BrandChatProps) {
           />
           <button
             type="submit"
-            disabled={isLoading || !(input || localInput || '').trim()}
+            disabled={isLoading || !localInput.trim()}
             className="absolute right-2 top-1/2 -translate-y-1/2 p-2.5 bg-white text-gray-900 rounded-full hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
             <svg

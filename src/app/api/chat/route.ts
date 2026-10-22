@@ -1,7 +1,6 @@
 import { NextRequest } from 'next/server';
-import { streamText } from 'ai';
-import { anthropic } from '@ai-sdk/anthropic';
-import { brandingExpertSkill } from '@/lib/skills/branding-expert';
+import { createUIMessageStream, createUIMessageStreamResponse, type UIMessage } from 'ai';
+import { getMessageContent } from '@/lib/utils/ui-message';
 
 /**
  * Chat API Route
@@ -27,8 +26,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Get the last user message to provide context-aware demo responses
-    const lastUserMessage = messages.filter((m: any) => m.role === 'user').pop();
-    const userText = lastUserMessage?.content || '';
+    const lastUserMessage = messages.filter((m: UIMessage) => m.role === 'user').pop();
+    const userText = lastUserMessage ? getMessageContent(lastUserMessage) : '';
 
     // Generate context-aware demo response
     let demoResponse = "That's a great name! Now, let me ask: Who is your target audience?";
@@ -39,21 +38,16 @@ export async function POST(req: NextRequest) {
       demoResponse = "Excellent! Based on what you've shared, I'm generating your brand strategy and logo concepts. This will just take a moment...";
     }
 
-    // Return a simple streaming response format that useChat can handle
-    const encoder = new TextEncoder();
-    const stream = new ReadableStream({
-      start(controller) {
-        // Format: 0:"text" for text deltas in useChat
-        controller.enqueue(encoder.encode(`0:"${demoResponse}"\n`));
-        controller.close();
-      }
-    });
-
-    return new Response(stream, {
-      headers: {
-        'Content-Type': 'text/plain; charset=utf-8',
-        'Cache-Control': 'no-cache',
-      },
+    // Use the same UI-message protocol as the installed AI SDK client.
+    return createUIMessageStreamResponse({
+      stream: createUIMessageStream({
+        execute({ writer }) {
+          writer.write({ type: 'text-start', id: 'demo-response' });
+          writer.write({ type: 'text-delta', id: 'demo-response', delta: demoResponse });
+          writer.write({ type: 'text-end', id: 'demo-response' });
+        },
+      }),
+      headers: { 'Cache-Control': 'no-cache' },
     });
   } catch (error) {
     console.error('Chat API error:', error);
